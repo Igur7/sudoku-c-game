@@ -4,7 +4,10 @@
 int main() {
     SudokuBoard board;
     board.generateFullBoard();
-    board.generatePuzzle(40);
+    int visablecells;
+    std::cout<<"Wprowadz ilosc widocznych pol: "<<std::endl;
+    std::cin>>visablecells;
+    board.generatePuzzle(visablecells);
 
     while (true) {
         board.display();
