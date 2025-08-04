@@ -1,17 +1,16 @@
 #include "SudokuBoard.hpp"
 #include <iostream>
+#include "generator.cpp"
 
 SudokuBoard::SudokuBoard() {
     for (auto& row : board)
         row.fill(0);
-}
+    for(auto& row : locked){
+      for(auto& col : row){
+        col = false;
+      }
+    }
 
-void SudokuBoard::generatePuzzle() {
-    board[0][0] = 5;
-    board[0][1] = 3;
-    board[1][0] = 6;
-    board[4][4] = 7;
-    board[8][8] = 9;
 }
 
 void SudokuBoard::display() const {
@@ -28,7 +27,7 @@ void SudokuBoard::display() const {
 }
 
 bool SudokuBoard::isValidMove(int row, int col, int num) const {
-    if (board[row][col] != 0) return false;
+    if (locked[row][col]) return false;
 
     for (int i = 0; i < 9; ++i) {
         if (board[row][i] == num || board[i][col] == num)
@@ -45,9 +44,69 @@ bool SudokuBoard::isValidMove(int row, int col, int num) const {
 }
 
 void SudokuBoard::setCell(int row, int col, int num) {
-    board[row][col] = num;
+    if(!locked[row][col]){
+      board[row][col] = num;
+    }
 }
 
 int SudokuBoard::getCell(int row, int col) const {
     return board[row][col];
+}
+bool SudokuBoard::findEmptyCell(int &row, int &col) const {
+  for( row = 0; row < 9; ++row)
+    for( col = 0; col < 9; ++col)
+      if (board[row][col] == 0) return true;
+  return false;
+}
+
+bool SudokuBoard::isSafe(int row, int col,int num) const {
+  return isValidMove(row, col, num);
+}
+
+bool SudokuBoard::solve() {
+    int row, col;
+    if (!findEmptyCell(row, col)) return true;
+
+    std::vector<int> nums = {1,2,3,4,5,6,7,8,9};
+    SimpleLCG rng(static_cast<unsigned long long>(time(nullptr)));
+    shuffle(nums, rng);
+
+    for (int num : nums) {
+        if (isValidMove(row, col, num)) {
+            board[row][col] = num;
+            if (solve()) return true;
+            board[row][col] = 0;  // backtrack
+        }
+    }
+
+    return false;
+}
+
+void SudokuBoard::generateFullBoard() {
+    board = {};
+    solve();
+}
+
+
+void SudokuBoard::generatePuzzle(int visibleCells) {
+    generateFullBoard();
+
+    std::vector<std::pair<int, int>> positions;
+    for (int row = 0; row < 9; ++row)
+        for (int col = 0; col < 9; ++col)
+            positions.emplace_back(row, col);
+
+    SimpleLCG rng(static_cast<unsigned long long>(time(nullptr)));
+    shuffle(positions, rng);
+
+    int cellsToRemove = 81 - visibleCells;
+    for (int i = 0; i < cellsToRemove; ++i) {
+        int r = positions[i].first;
+        int c = positions[i].second;
+        board[r][c] = 0;
+    }
+
+    for (int row = 0; row < 9; ++row)
+        for (int col = 0; col < 9; ++col)
+            locked[row][col] = (board[row][col] != 0);
 }
