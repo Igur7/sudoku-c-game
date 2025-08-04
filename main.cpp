@@ -3,7 +3,8 @@
 
 int main() {
     SudokuBoard board;
-    board.generatePuzzle();
+    board.generateFullBoard();
+    board.generatePuzzle(40);
 
     while (true) {
         board.display();
